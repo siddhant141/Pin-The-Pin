@@ -1,0 +1,62 @@
+<!DOCTYPE html> 
+<html> 
+<head> 
+  <script type="text/javascript"> 
+  	
+  	var options = {
+  	  enableHighAccuracy: true,
+  	  timeout: 5000,
+  	  maximumAge: 0
+  	};
+
+  	function success(pos) {
+  	  var crd = pos.coords;
+
+  	  console.log('Your current position is:');
+  	  console.log(`Latitude : ${crd.latitude}`);
+  	  console.log(`Longitude: ${crd.longitude}`);
+  	  console.log(`More or less ${crd.accuracy} meters.`);
+  	  document.getElementById('test').innerHTML = crd.latitude + ", "+ crd.longitude;
+  	}
+
+  	function error(err) {
+  	  console.warn(`ERROR(${err.code}): ${err.message}`);
+  	}
+
+  	navigator.geolocation.getCurrentPosition(success, error, options);
+
+  	if(window.DeviceMotionEvent){
+  		window.addEventListener("devicemotion", motion, false);
+  	}else{
+  		console.log("DeviceMotionEvent is not supported");
+  	} 
+  	function motion(event){
+  		console.log("Accelerometer: "
+  		+ event.accelerationIncludingGravity.x + ", "
+  		+ event.accelerationIncludingGravity.y + ", "
+  		+ event.accelerationIncludingGravity.z
+  		);
+  		document.getElementById('accel').textContent = event.accelerationIncludingGravity.x + ", "
+  		+ event.accelerationIncludingGravity.y + ", "
+  		+ event.accelerationIncludingGravity.z ;
+  	}
+  	let gyroscope = new Gyroscope({frequency: 60});
+
+  	gyroscope.addEventListener('reading', e => {
+  	  console.log("Angular velocity along the X-axis " + gyroscope.x);
+  	  console.log("Angular velocity along the Y-axis " + gyroscope.y);
+  	  console.log("Angular velocity along the Z-axis " + gyroscope.z);	
+  	  document.getElementById('gyro').textContent = gyroscope.x + ", "
+  	  	+ gyroscope.y + ", "
+  	  	+ gyroscope.z ;	  
+  	});
+  	gyroscope.start();
+  </script> 
+</head> 
+
+<body> 
+  <div id="test">Loading...</div>
+  Accelerometer: <span id = "accel"> </span> <br />
+  Gyroscope: <span id="gyro"></span>
+</body> 
+</html>

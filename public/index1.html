@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<title> Geo </title>
+<h1>Geo</h1> 
+
+<body>
+	<script>
+		
+		if ('geolocation' in navigator){
+			function getlocation() {
+				console.log('geolocation available');
+
+				navigator.geolocation.getCurrentPosition(async function(position){
+					timeout: 30000
+					const lat = position.coords.latitude ; 
+					const lon = position.coords.longitude ; 
+
+					document.getElementById('latitude').textContent = lat ; 
+					document.getElementById('longitude').textContent = lon ; 
+
+					console.log(position.coords.latitude);
+					console.log( position.coords.longitude);
+
+					// sending data from client side using post
+					/*const data = { lat , lon} ; 
+					const options = {
+						method : 'POST' , 
+						headers: {
+							'Content-Type' : 'application/json'
+						},
+						body : JSON.stringify(data)
+					}; 
+					const response = await fetch('/api' , options);
+					const json = await response.json() ; 
+					console.log(json);*/
+
+				});
+				// setInterval(getlocation,5000);
+			} 
+			getlocation();
+				
+		}else {
+			
+			console.log('geolocation not available');
+		}  
+		   
+		if(window.DeviceMotionEvent){
+			window.addEventListener("devicemotion", motion, false);
+		}else{
+			console.log("DeviceMotionEvent is not supported");
+		} 
+		function motion(event){
+			console.log("Accelerometer: "
+			+ event.accelerationIncludingGravity.x + ", "
+			+ event.accelerationIncludingGravity.y + ", "
+			+ event.accelerationIncludingGravity.z
+			);
+			document.getElementById('accel').textContent = event.accelerationIncludingGravity.x + ", "
+			+ event.accelerationIncludingGravity.y + ", "
+			+ event.accelerationIncludingGravity.z ;
+		}
+		let gyroscope = new Gyroscope({frequency: 60});
+
+		gyroscope.addEventListener('reading', e => {
+		  console.log("Angular velocity along the X-axis " + gyroscope.x);
+		  console.log("Angular velocity along the Y-axis " + gyroscope.y);
+		  console.log("Angular velocity along the Z-axis " + gyroscope.z);		  
+		});
+		gyroscope.start();
+		document.getElementById('gyro').textContent = gyroscope.x + ", "
+			+ gyroscope.y + ", "
+			+ gyroscope.z ;
+	</script>
+
+<!-- "&deg;" is for degree symbol -->
+<p>
+	Latitude: <span id = "latitude"> </span> &deg; <br />
+	Longitude: <span id = "longitude">  </span> &deg; <br />
+	Accelerometer: <span id = "accel"> </span> <br />
+	Gyroscope: <span id="gyro"></span>
+</p>
+</body>
+</html>
