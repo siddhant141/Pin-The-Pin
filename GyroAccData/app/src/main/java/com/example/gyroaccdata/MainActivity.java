@@ -14,6 +14,7 @@ import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
 import android.os.Bundle;
 import android.os.Environment;
+import android.os.Handler;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
@@ -55,6 +56,8 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
 	LineData ldata;
 	Thread thread;
 	boolean record11=false;
+
+	Long start_time;
 
 	LineData ldata1;
 	Thread thread1;
@@ -196,6 +199,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
 
 				record = true;
 				record1=true;
+				start_time=System.currentTimeMillis();
 				fileName= DateFormat.getDateTimeInstance().format(new Date()).replaceAll(" ","_")+".csv";
 				filePath = baseDir + "/Accelerometer" + File.separator + fileName;
 				File createFolder=new File(baseDir + "/Accelerometer");
@@ -210,7 +214,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
 				Log.println(Log.INFO,"Accapp","file name : "+filePath);
 				try {
 					writer1 = new CSVWriter(new FileWriter(filePath));
-
+					data.add(new String[] {"Time","X","Y","Z"});
 				} catch (IOException e) {
 					e.printStackTrace();
 					Toast.makeText(getBaseContext(),"File nai bani",Toast.LENGTH_LONG).show();
@@ -230,7 +234,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
 				Log.println(Log.INFO,"Accapp","file name : "+filePath);
 				try {
 					writer = new CSVWriter(new FileWriter(filePath));
-
+					data1.add(new String[] {"Time","X","Y","Z"});
 				} catch (IOException e) {
 					e.printStackTrace();
 					Toast.makeText(getBaseContext(),"File nai bani",Toast.LENGTH_LONG).show();
@@ -243,8 +247,14 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
 			public void onClick(View view) {
 				record = false;
 				record1=false;
-				writer.writeAll(data);
-				writer1.writeAll(data1);
+				//writer -> gyro
+				//writer1 -> acc
+				//data -> acc
+				//data1 -> gyro
+				writer.writeAll(data1);
+				writer1.writeAll(data);
+				data.clear();
+				data1.clear();
 
 				try {
 					writer.close();
@@ -259,7 +269,8 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
 //      acc
 		senSensorManager = (SensorManager) getSystemService(Context.SENSOR_SERVICE);
 		senAccelerometer = senSensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER);
-		senSensorManager.registerListener(this, senAccelerometer , SensorManager.SENSOR_DELAY_NORMAL);
+//		senSensorManager.registerListener(this, senAccelerometer , SensorManager.SENSOR_DELAY_NORMAL);
+		senSensorManager.registerListener(this, senAccelerometer ,1000);
 
 
 
@@ -279,20 +290,25 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
 					float y = sensorEvent.values[1];
 					float z = sensorEvent.values[2];
 
-					String temp= Calendar.getInstance().getTime().toString().replaceAll(":","");
-					String T[] = temp.split(" ");
+//					String temp= Calendar.getInstance().getTime().toString().replaceAll(":","");
+//					String T[] = temp.split(" ");
+					Long sub=System.currentTimeMillis();
+
 					String X=Float.toString(x);
 					String Y=Float.toString(y);
 					String Z=Float.toString(z);
 
 					if(record == true && record1==true){
-						data1.add(new String[] {T[3],X,Y,Z});
+//						data1.add(new String[] {T[3],X,Y,Z});
+						data1.add(new String[] {Long.toString(sub-start_time),X,Y,Z});
 						textView2.setText("Gyro Values\n"+X+"\n"+Y+"\n"+Z);
 						addEntry(sensorEvent);
 						record = false;
+
 					}
 
 				}
+
 			}
 
 			@Override
@@ -302,7 +318,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
 
 		// Register the listener
 		sensorManager.registerListener(gyroscopeSensorListener,
-				gyroscopeSensor, SensorManager.SENSOR_DELAY_NORMAL);
+				gyroscopeSensor, 1000);
 
 		feedMultiple();
 		feedMultiple1();
@@ -508,19 +524,21 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
 			float y = sensorEvent.values[1];
 			float z = sensorEvent.values[2];
 
-			String temp= Calendar.getInstance().getTime().toString();
-			String T[] = temp.split(" ");
-//            Log.println(Log.INFO,"Accapp",T[3]);
+//			String temp= Calendar.getInstance().getTime().toString().replaceAll(":","");
+//			String T[] = temp.split(" ");
+			Long sub=System.currentTimeMillis();
 
 			String X=Float.toString(x);
 			String Y=Float.toString(y);
 			String Z=Float.toString(z);
 
 			if(record11 == true && record1==true){
-				data.add(new String[] {T[3],X,Y,Z});
+//				data.add(new String[] {T[3],X,Y,Z});
+				data.add(new String[] {Long.toString(sub-start_time),X,Y,Z});
 				textView.setText("Acclero Values\n"+X+"\n"+Y+"\n"+Z);
 				addEntry1(sensorEvent);
 				record11 = false;
+
 			}
 
 		}
@@ -530,8 +548,4 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
 	public void onAccuracyChanged(Sensor sensor, int i) {
 
 	}
-
-
-
-
 }
