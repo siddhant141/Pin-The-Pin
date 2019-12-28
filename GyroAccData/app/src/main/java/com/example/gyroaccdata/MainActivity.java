@@ -193,75 +193,80 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
 
 		verifyStoragePermissions(this);
 
-		startButton.setOnClickListener(new View.OnClickListener() {
-			@Override
-			public void onClick(View view) {
+		startButton.setOnClickListener(view -> {
 
-				record = true;
-				record1=true;
-				start_time=System.currentTimeMillis();
-				fileName= DateFormat.getDateTimeInstance().format(new Date()).replaceAll(" ","_")+".csv";
-				filePath = baseDir + "/Accelerometer" + File.separator + fileName;
-				File createFolder=new File(baseDir + "/Accelerometer");
-				createFolder.mkdirs();
-				f = new File(filePath);
-				try {
-					f.createNewFile();
-				} catch (IOException e) {
-					e.printStackTrace();
-					Log.println(Log.INFO,"Accapp","unable to create file");
-				}
-				Log.println(Log.INFO,"Accapp","file name : "+filePath);
-				try {
-					writer1 = new CSVWriter(new FileWriter(filePath));
-					data.add(new String[] {"Time","X","Y","Z"});
-				} catch (IOException e) {
-					e.printStackTrace();
-					Toast.makeText(getBaseContext(),"File nai bani",Toast.LENGTH_LONG).show();
-				}
-				//gyro-----------------------------------------------------
-				fileName= DateFormat.getDateTimeInstance().format(new Date()).replaceAll(" ","_")+".csv";
-				filePath = baseDir + "/Gyro" + File.separator + fileName;
-				createFolder=new File(baseDir + "/Gyro");
-				createFolder.mkdirs();
-				f = new File(filePath);
-				try {
-					f.createNewFile();
-				} catch (IOException e) {
-					e.printStackTrace();
-					Log.println(Log.INFO,"Accapp","unable to create file");
-				}
-				Log.println(Log.INFO,"Accapp","file name : "+filePath);
-				try {
-					writer = new CSVWriter(new FileWriter(filePath));
-					data1.add(new String[] {"Time","X","Y","Z"});
-				} catch (IOException e) {
-					e.printStackTrace();
-					Toast.makeText(getBaseContext(),"File nai bani",Toast.LENGTH_LONG).show();
-				}
-			}
+			record = true;
+			record1=true;
+
+			//data -> acc
+			//data1 -> gyro
+			start_time=System.currentTimeMillis();
+			data.add(new String[] {"Time","X","Y","Z"});
+			data1.add(new String[] {"Time","X","Y","Z"});
 		});
 
-		stopButton.setOnClickListener((new View.OnClickListener() {
-			@Override
-			public void onClick(View view) {
-				record = false;
-				record1=false;
-				//writer -> gyro
-				//writer1 -> acc
-				//data -> acc
-				//data1 -> gyro
-				writer.writeAll(data1);
-				writer1.writeAll(data);
-				data.clear();
-				data1.clear();
+		stopButton.setOnClickListener((view -> {
+			record = false;
+			record1=false;
 
-				try {
-					writer.close();
-					writer1.close();
-				} catch (IOException e) {
-					e.printStackTrace();
-				}
+			//Acceleromoter
+
+			String written=editText.getText().toString();
+			String lastch=written.substring(written.length() - 1);
+			fileName= DateFormat.getDateTimeInstance().format(new Date()).replaceAll(" ","_")+lastch+".csv";
+			filePath = baseDir + "/Accelerometer" + File.separator + fileName;
+			File createFolder=new File(baseDir + "/Accelerometer");
+			createFolder.mkdirs();
+			f = new File(filePath);
+			try {
+				f.createNewFile();
+			} catch (IOException e) {
+				e.printStackTrace();
+				Log.println(Log.INFO,"Accapp","unable to create file");
+			}
+			Log.println(Log.INFO,"Accapp","file name : "+filePath);
+			try {
+				writer1 = new CSVWriter(new FileWriter(filePath));
+			} catch (IOException e) {
+				e.printStackTrace();
+				Toast.makeText(getBaseContext(),"File nai bani",Toast.LENGTH_LONG).show();
+			}
+
+			//gyro-----------------------------------------------------
+			fileName= DateFormat.getDateTimeInstance().format(new Date()).replaceAll(" ","_")+lastch+".csv";
+//			fileName= DateFormat.getDateTimeInstance().format(new Date()).replaceAll(" ","_")+".csv";
+			filePath = baseDir + "/Gyro" + File.separator + fileName;
+			createFolder=new File(baseDir + "/Gyro");
+			createFolder.mkdirs();
+			f = new File(filePath);
+			try {
+				f.createNewFile();
+			} catch (IOException e) {
+				e.printStackTrace();
+				Log.println(Log.INFO,"Accapp","unable to create file");
+			}
+			Log.println(Log.INFO,"Accapp","file name : "+filePath);
+			try {
+				writer = new CSVWriter(new FileWriter(filePath));
+			} catch (IOException e) {
+				e.printStackTrace();
+				Toast.makeText(getBaseContext(),"File nai bani",Toast.LENGTH_LONG).show();
+			}
+
+			//writer -> gyro
+			//writer1 -> acc
+			//data -> acc
+			//data1 -> gyro
+			writer.writeAll(data1);
+			writer1.writeAll(data);
+			data.clear();
+			data1.clear();
+
+			try {
+				writer.close();
+				writer1.close();
+			} catch (IOException e) {
+				e.printStackTrace();
 			}
 		}));
 
