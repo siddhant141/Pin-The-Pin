@@ -15,6 +15,8 @@ import android.hardware.SensorManager;
 import android.os.Bundle;
 import android.os.Environment;
 import android.os.Handler;
+import android.text.Editable;
+import android.text.TextWatcher;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
@@ -58,6 +60,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
 	boolean record11=false;
 
 	Long start_time;
+	Long press_time;
 
 	LineData ldata1;
 	Thread thread1;
@@ -208,12 +211,12 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
 		stopButton.setOnClickListener((view -> {
 			record = false;
 			record1=false;
-
+			press_time-=start_time;
 			//Acceleromoter
 
 			String written=editText.getText().toString();
 			String lastch=written.substring(written.length() - 1);
-			fileName= DateFormat.getDateTimeInstance().format(new Date()).replaceAll(" ","_")+lastch+".csv";
+			fileName= DateFormat.getDateTimeInstance().format(new Date()).replaceAll(" ","_")+lastch+press_time+".csv";
 			filePath = baseDir + "/Accelerometer" + File.separator + fileName;
 			File createFolder=new File(baseDir + "/Accelerometer");
 			createFolder.mkdirs();
@@ -233,7 +236,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
 			}
 
 			//gyro-----------------------------------------------------
-			fileName= DateFormat.getDateTimeInstance().format(new Date()).replaceAll(" ","_")+lastch+".csv";
+			fileName= DateFormat.getDateTimeInstance().format(new Date()).replaceAll(" ","_")+lastch+press_time+".csv";
 //			fileName= DateFormat.getDateTimeInstance().format(new Date()).replaceAll(" ","_")+".csv";
 			filePath = baseDir + "/Gyro" + File.separator + fileName;
 			createFolder=new File(baseDir + "/Gyro");
@@ -270,6 +273,22 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
 			}
 		}));
 
+		editText.addTextChangedListener(new TextWatcher() {
+			@Override
+			public void beforeTextChanged(CharSequence s, int start, int count, int after) {
+
+			}
+
+			@Override
+			public void onTextChanged(CharSequence s, int start, int before, int count) {
+				press_time=System.currentTimeMillis();
+			}
+
+			@Override
+			public void afterTextChanged(Editable s) {
+
+			}
+		});
 
 //      acc
 		senSensorManager = (SensorManager) getSystemService(Context.SENSOR_SERVICE);
