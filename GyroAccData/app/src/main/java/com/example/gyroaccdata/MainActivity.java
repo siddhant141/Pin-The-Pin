@@ -6,6 +6,7 @@ import androidx.core.app.ActivityCompat;
 import android.Manifest;
 import android.app.Activity;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.pm.PackageManager;
 import android.graphics.Color;
 import android.hardware.Sensor;
@@ -17,7 +18,10 @@ import android.os.Environment;
 import android.os.Handler;
 import android.text.Editable;
 import android.text.TextWatcher;
+import android.text.method.DialerKeyListener;
+import android.text.method.KeyListener;
 import android.util.Log;
+import android.view.KeyEvent;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
@@ -44,6 +48,8 @@ import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
 
+import static java.lang.Math.pow;
+
 public class MainActivity extends AppCompatActivity implements SensorEventListener
 {
 
@@ -61,6 +67,8 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
 
 	Long start_time;
 	Long press_time;
+	Long key_down= Long.valueOf(0);
+	Long key_up= Long.valueOf(0);
 
 	LineData ldata1;
 	Thread thread1;
@@ -69,13 +77,20 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
 	String fileName;
 	String filePath;
 	File f;
-	CSVWriter writer,writer1;
+	CSVWriter writer,writer1,writer2;
 
 	LineChart chart;
 	LineChart chart1;
 
 	List<String[]> data = new ArrayList<String[]>();
 	List<String[]> data1 = new ArrayList<String[]>();
+	List<String[]> data2 = new ArrayList<String[]>();
+
+	/*private final float[] accelerometerReading = new float[3];
+	private final float[] magnetometerReading = new float[3];
+
+	private final float[] rotationMatrix = new float[9];
+	private final float[] orientationAngles = new float[3];*/
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
@@ -87,6 +102,395 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
 		textView = findViewById(R.id.textView);
 		textView2 = findViewById(R.id.textView2);
 
+		verifyStoragePermissions(this);
+		charting();
+
+		startButton.setEnabled(true);
+		stopButton.setEnabled(false);
+
+//		editText.setCursorVisible(false);
+
+		editText.setKeyListener(new KeyListener() {
+			@Override
+			public int getInputType() {
+				return 2;
+			}
+
+			@Override
+			public boolean onKeyDown(View view, Editable text, int keyCode, KeyEvent event) {
+//				Log.d("Accapp","key : "+keyCode);
+				key_down=System.currentTimeMillis();
+				String key="0";
+				switch(keyCode)
+				{
+					case 7:
+						key="0";
+						break;
+					case 8:
+						key="1";
+						break;
+					case 9:
+						key="2";
+						break;
+					case 10:
+						key="3";
+						break;
+					case 11:
+						key="4";
+						break;
+					case 12:
+						key="5";
+						break;
+					case 13:
+						key="6";
+						break;
+					case 14:
+						key="7";
+						break;
+					case 15:
+						key="8";
+						break;
+					case 16:
+						key="9";
+						break;
+				}
+				if(keyCode==67 && text.length()!=0)
+				{
+//					editText.setText(text.delete(text.length()-1,text.length()));
+					text.delete(text.length()-1,text.length());
+				}
+				else if(keyCode!=67)
+				{
+//					editText.setText(text.append(key));
+					text.append(key);
+				}
+				return false;
+			}
+
+			@Override
+			public boolean onKeyUp(View view, Editable text, int keyCode, KeyEvent event) {
+				key_up=System.currentTimeMillis();
+				return false;
+			}
+
+			@Override
+			public boolean onKeyOther(View view, Editable text, KeyEvent event) {
+				return false;
+			}
+
+			@Override
+			public void clearMetaKeyState(View view, Editable content, int states) {
+
+			}
+		});
+
+		startButton.setOnClickListener(view -> {
+
+			record = true;
+			record1=true;
+			startButton.setEnabled(false);
+			stopButton.setEnabled(true);
+
+			//data -> acc
+			//data1 -> gyro
+			start_time=System.currentTimeMillis();
+			data.add(new String[] {"Time","X","Y","Z"});
+			data1.add(new String[] {"Time","X","Y","Z"});
+			data2.add(new String[] {"Time","X","Y","Z"});
+		});
+
+		stopButton.setOnClickListener((view -> {
+			record = false;
+			record1=false;
+			press_time-=start_time;
+
+			startButton.setEnabled(true);
+			stopButton.setEnabled(false);
+
+			/*Log.d("Accapp","key down : " + (key_down-start_time));
+			Log.d("Accapp","key up : " + (key_up-start_time));*/
+
+			key_down-=start_time;
+			key_up-=start_time;
+
+			//Acceleromoter
+
+			String written=editText.getText().toString();
+			String lastch;
+			if (written.length()==0)
+			{
+				lastch="1";
+			}
+			else
+			{
+				lastch=written.substring(written.length() - 1);
+			}
+			fileName= DateFormat.getDateTimeInstance().format(new Date()).replaceAll(" ","_")+lastch+key_down+"&"+key_up+".csv";
+			filePath = baseDir + "/Accelerometer" + File.separator + fileName;
+			File createFolder=new File(baseDir + "/Accelerometer");
+			createFolder.mkdirs();
+			f = new File(filePath);
+			try {
+				f.createNewFile();
+			} catch (IOException e) {
+				e.printStackTrace();
+				Log.println(Log.INFO,"Accapp","unable to create file");
+			}
+			Log.println(Log.INFO,"Accapp","file name : "+filePath);
+			try {
+				writer = new CSVWriter(new FileWriter(filePath));
+			} catch (IOException e) {
+				e.printStackTrace();
+				Toast.makeText(getBaseContext(),"File nai bani",Toast.LENGTH_LONG).show();
+			}
+
+			//gyro-----------------------------------------------------
+			fileName= DateFormat.getDateTimeInstance().format(new Date()).replaceAll(" ","_")+lastch+key_down+"&"+key_up+".csv";
+//			fileName= DateFormat.getDateTimeInstance().format(new Date()).replaceAll(" ","_")+".csv";
+			filePath = baseDir + "/Gyro" + File.separator + fileName;
+			createFolder=new File(baseDir + "/Gyro");
+			createFolder.mkdirs();
+			f = new File(filePath);
+			try {
+				f.createNewFile();
+			} catch (IOException e) {
+				e.printStackTrace();
+				Log.println(Log.INFO,"Accapp","unable to create file");
+			}
+			Log.println(Log.INFO,"Accapp","file name : "+filePath);
+			try {
+				writer1 = new CSVWriter(new FileWriter(filePath));
+			} catch (IOException e) {
+				e.printStackTrace();
+				Toast.makeText(getBaseContext(),"File nai bani",Toast.LENGTH_LONG).show();
+			}
+
+			//gravity
+
+			fileName= DateFormat.getDateTimeInstance().format(new Date()).replaceAll(" ","_")+lastch+press_time+".csv";
+//			fileName= DateFormat.getDateTimeInstance().format(new Date()).replaceAll(" ","_")+".csv";
+			filePath = baseDir + "/Grav" + File.separator + fileName;
+			createFolder=new File(baseDir + "/Grav");
+			createFolder.mkdirs();
+			f = new File(filePath);
+			try {
+				f.createNewFile();
+			} catch (IOException e) {
+				e.printStackTrace();
+				Log.println(Log.INFO,"Accapp","unable to create file");
+			}
+			Log.println(Log.INFO,"Accapp","file name : "+filePath);
+			try {
+				writer2 = new CSVWriter(new FileWriter(filePath));
+			} catch (IOException e) {
+				e.printStackTrace();
+				Toast.makeText(getBaseContext(),"File nai bani",Toast.LENGTH_LONG).show();
+			}
+
+			//writer1 -> gyro
+			//writer -> acc
+			//data -> acc
+			//data1 -> gyro
+			writer2.writeAll(data2);
+			writer1.writeAll(data1);
+			writer.writeAll(data);
+			data.clear();
+			data1.clear();
+			data2.clear();
+
+			try {
+				writer.close();
+				writer1.close();
+				writer2.close();
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+		}));
+
+		editText.addTextChangedListener(new TextWatcher() {
+			@Override
+			public void beforeTextChanged(CharSequence s, int start, int count, int after) {
+
+			}
+
+			@Override
+			public void onTextChanged(CharSequence s, int start, int before, int count) {
+				press_time=System.currentTimeMillis();
+			}
+
+			@Override
+			public void afterTextChanged(Editable s) {
+
+			}
+		});
+
+//      acc
+		senSensorManager = (SensorManager) getSystemService(Context.SENSOR_SERVICE);
+		senAccelerometer = senSensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER);
+//		senSensorManager.registerListener(this, senAccelerometer , SensorManager.SENSOR_DELAY_NORMAL);
+		senSensorManager.registerListener(this, senAccelerometer ,(int)pow(10,4));
+
+//        gyro
+//		SensorManager sensorManager = (SensorManager) getSystemService(Context.SENSOR_SERVICE);;
+		Sensor gyroscopeSensor = senSensorManager.getDefaultSensor(Sensor.TYPE_GYROSCOPE);
+		senSensorManager.registerListener(this,gyroscopeSensor,(int)pow(10,4));
+
+		Sensor gravitySensor = senSensorManager.getDefaultSensor(Sensor.TYPE_GRAVITY);
+		senSensorManager.registerListener(this,gravitySensor,(int)pow(10,4));
+
+		//magnetic field (magnetometer)
+		/*Sensor magneticField = senSensorManager.getDefaultSensor(Sensor.TYPE_MAGNETIC_FIELD);
+		if(magneticField==null)
+		{
+			Log.d("Accapp","no magnet");
+		}
+		else
+		{
+			senSensorManager.registerListener(this, magneticField, 1000);
+			Log.d("Accapp","magnet");
+		}*/
+
+//		Log.println(Log.INFO,"Accapp",gyroscopeSensor.toString());
+		// Create a listener
+		/*SensorEventListener gyroscopeSensorListener = new SensorEventListener() {
+			@Override
+			public void onSensorChanged(SensorEvent sensorEvent) {
+				// More code goes here
+				Sensor mySensor = sensorEvent.sensor;
+
+				if (mySensor.getType() == Sensor.TYPE_GYROSCOPE) {
+					float x = sensorEvent.values[0];
+					float y = sensorEvent.values[1];
+					float z = sensorEvent.values[2];
+
+//					String temp= Calendar.getInstance().getTime().toString().replaceAll(":","");
+//					String T[] = temp.split(" ");
+					Long sub=System.currentTimeMillis();
+
+					String X=Float.toString(x);
+					String Y=Float.toString(y);
+					String Z=Float.toString(z);
+
+					if(record == true && record1==true){
+//						data1.add(new String[] {T[3],X,Y,Z});
+						data1.add(new String[] {Long.toString(sub-start_time),X,Y,Z});
+						textView2.setText("Gyro Values\n"+X+"\n"+Y+"\n"+Z);
+						addEntry(sensorEvent);
+						record = false;
+
+					}
+
+				}
+
+			}
+
+			@Override
+			public void onAccuracyChanged(Sensor sensor, int i) {
+			}
+		};
+
+		// Register the listener
+		sensorManager.registerListener(gyroscopeSensorListener,
+				gyroscopeSensor, 1000);*/
+
+		feedMultiple();
+		feedMultiple1();
+	}
+
+	@Override
+	public void onSensorChanged(SensorEvent sensorEvent) {
+		Sensor mySensor = sensorEvent.sensor;
+
+		if (mySensor.getType() == Sensor.TYPE_ACCELEROMETER) {
+//			System.arraycopy(sensorEvent.values, 0, accelerometerReading,0, accelerometerReading.length);
+			float x = sensorEvent.values[0];
+			float y = sensorEvent.values[1];
+			float z = sensorEvent.values[2];
+
+//			String temp= Calendar.getInstance().getTime().toString().replaceAll(":","");
+//			String T[] = temp.split(" ");
+			Long sub=System.currentTimeMillis();
+
+			String X=Float.toString(x);
+			String Y=Float.toString(y);
+			String Z=Float.toString(z);
+
+			if(record11 == true && record1==true){
+//				data.add(new String[] {T[3],X,Y,Z});
+				data.add(new String[] {Long.toString(sub-start_time),X,Y,Z});
+				textView.setText("Acclero Values\n"+X+"\n"+Y+"\n"+Z);
+				addEntry1(sensorEvent);
+				record11 = false;
+
+			}
+
+		}
+
+		else if (mySensor.getType() == Sensor.TYPE_GYROSCOPE) {
+			float x = sensorEvent.values[0];
+			float y = sensorEvent.values[1];
+			float z = sensorEvent.values[2];
+
+//			String temp= Calendar.getInstance().getTime().toString().replaceAll(":","");
+//			String T[] = temp.split(" ");
+			Long sub=System.currentTimeMillis();
+
+			String X=Float.toString(x);
+			String Y=Float.toString(y);
+			String Z=Float.toString(z);
+
+			if(record == true && record1==true){
+//				data1.add(new String[] {T[3],X,Y,Z});
+				data1.add(new String[] {Long.toString(sub-start_time),X,Y,Z});
+//				textView2.setText("Gyro Values\n"+X+"\n"+Y+"\n"+Z);
+				addEntry(sensorEvent);
+				record = false;
+
+			}
+
+		}
+
+		if (mySensor.getType() == Sensor.TYPE_GRAVITY) {
+//			System.arraycopy(sensorEvent.values, 0, accelerometerReading,0, accelerometerReading.length);
+			float x = sensorEvent.values[0];
+			float y = sensorEvent.values[1];
+			float z = sensorEvent.values[2];
+
+//			String temp= Calendar.getInstance().getTime().toString().replaceAll(":","");
+//			String T[] = temp.split(" ");
+			Long sub=System.currentTimeMillis();
+
+			String X=Float.toString(x);
+			String Y=Float.toString(y);
+			String Z=Float.toString(z);
+
+			if(record1==true){
+//				data.add(new String[] {T[3],X,Y,Z});
+				data2.add(new String[] {Long.toString(sub-start_time),X,Y,Z});
+				textView.setText("Acclero Values\n"+X+"\n"+Y+"\n"+Z);
+			}
+
+		}
+
+		/*else if (mySensor.getType() == Sensor.TYPE_MAGNETIC_FIELD)
+		{
+			Log.d("Accapp","magnet");
+			System.arraycopy(sensorEvent.values, 0, magnetometerReading,0, magnetometerReading.length);
+			// Update rotation matrix, which is needed to update orientation angles.
+			SensorManager.getRotationMatrix(rotationMatrix, null,accelerometerReading, magnetometerReading);
+			// "mRotationMatrix" now has up-to-date information.
+			SensorManager.getOrientation(rotationMatrix, orientationAngles);
+			// "mOrientationAngles" now has up-to-date information.
+			textView2.setText("Magnet Values\n"+orientationAngles[0]+"\n"+orientationAngles[1]+"\n"+orientationAngles[2]);
+		}*/
+	}
+
+	@Override
+	public void onAccuracyChanged(Sensor sensor, int i) {
+
+	}
+
+	private void charting() {
 		chart = findViewById(R.id.chartGyro);
 		chart.getDescription().setEnabled(true);
 		Description description=new Description();
@@ -128,8 +532,10 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
 		YAxis leftAxis = chart.getAxisLeft();
 		leftAxis.setTextColor(Color.BLACK);
 		leftAxis.setDrawGridLines(false);
-		leftAxis.setAxisMaximum(5.01f);
-		leftAxis.setAxisMinimum(4.99f);
+		/*leftAxis.setAxisMaximum(5.01f);
+		leftAxis.setAxisMinimum(4.99f);*/
+		leftAxis.setAxisMaximum(10f);
+		leftAxis.setAxisMinimum(0f);
 		leftAxis.setDrawGridLines(true);
 
 		YAxis rightAxis = chart.getAxisRight();
@@ -192,160 +598,6 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
 		chart1.getAxisLeft().setDrawGridLines(false);
 		chart1.getXAxis().setDrawGridLines(false);
 		chart1.setDrawBorders(false);
-
-
-		verifyStoragePermissions(this);
-
-		startButton.setOnClickListener(view -> {
-
-			record = true;
-			record1=true;
-
-			//data -> acc
-			//data1 -> gyro
-			start_time=System.currentTimeMillis();
-			data.add(new String[] {"Time","X","Y","Z"});
-			data1.add(new String[] {"Time","X","Y","Z"});
-		});
-
-		stopButton.setOnClickListener((view -> {
-			record = false;
-			record1=false;
-			press_time-=start_time;
-			//Acceleromoter
-
-			String written=editText.getText().toString();
-			String lastch=written.substring(written.length() - 1);
-			fileName= DateFormat.getDateTimeInstance().format(new Date()).replaceAll(" ","_")+lastch+press_time+".csv";
-			filePath = baseDir + "/Accelerometer" + File.separator + fileName;
-			File createFolder=new File(baseDir + "/Accelerometer");
-			createFolder.mkdirs();
-			f = new File(filePath);
-			try {
-				f.createNewFile();
-			} catch (IOException e) {
-				e.printStackTrace();
-				Log.println(Log.INFO,"Accapp","unable to create file");
-			}
-			Log.println(Log.INFO,"Accapp","file name : "+filePath);
-			try {
-				writer1 = new CSVWriter(new FileWriter(filePath));
-			} catch (IOException e) {
-				e.printStackTrace();
-				Toast.makeText(getBaseContext(),"File nai bani",Toast.LENGTH_LONG).show();
-			}
-
-			//gyro-----------------------------------------------------
-			fileName= DateFormat.getDateTimeInstance().format(new Date()).replaceAll(" ","_")+lastch+press_time+".csv";
-//			fileName= DateFormat.getDateTimeInstance().format(new Date()).replaceAll(" ","_")+".csv";
-			filePath = baseDir + "/Gyro" + File.separator + fileName;
-			createFolder=new File(baseDir + "/Gyro");
-			createFolder.mkdirs();
-			f = new File(filePath);
-			try {
-				f.createNewFile();
-			} catch (IOException e) {
-				e.printStackTrace();
-				Log.println(Log.INFO,"Accapp","unable to create file");
-			}
-			Log.println(Log.INFO,"Accapp","file name : "+filePath);
-			try {
-				writer = new CSVWriter(new FileWriter(filePath));
-			} catch (IOException e) {
-				e.printStackTrace();
-				Toast.makeText(getBaseContext(),"File nai bani",Toast.LENGTH_LONG).show();
-			}
-
-			//writer -> gyro
-			//writer1 -> acc
-			//data -> acc
-			//data1 -> gyro
-			writer.writeAll(data1);
-			writer1.writeAll(data);
-			data.clear();
-			data1.clear();
-
-			try {
-				writer.close();
-				writer1.close();
-			} catch (IOException e) {
-				e.printStackTrace();
-			}
-		}));
-
-		editText.addTextChangedListener(new TextWatcher() {
-			@Override
-			public void beforeTextChanged(CharSequence s, int start, int count, int after) {
-
-			}
-
-			@Override
-			public void onTextChanged(CharSequence s, int start, int before, int count) {
-				press_time=System.currentTimeMillis();
-			}
-
-			@Override
-			public void afterTextChanged(Editable s) {
-
-			}
-		});
-
-//      acc
-		senSensorManager = (SensorManager) getSystemService(Context.SENSOR_SERVICE);
-		senAccelerometer = senSensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER);
-//		senSensorManager.registerListener(this, senAccelerometer , SensorManager.SENSOR_DELAY_NORMAL);
-		senSensorManager.registerListener(this, senAccelerometer ,1000);
-
-
-
-//        gyro
-		SensorManager sensorManager = (SensorManager) getSystemService(Context.SENSOR_SERVICE);;
-		Sensor gyroscopeSensor = sensorManager.getDefaultSensor(Sensor.TYPE_GYROSCOPE);
-		Log.println(Log.INFO,"Accapp",gyroscopeSensor.toString());
-		// Create a listener
-		SensorEventListener gyroscopeSensorListener = new SensorEventListener() {
-			@Override
-			public void onSensorChanged(SensorEvent sensorEvent) {
-				// More code goes here
-				Sensor mySensor = sensorEvent.sensor;
-
-				if (mySensor.getType() == Sensor.TYPE_GYROSCOPE) {
-					float x = sensorEvent.values[0];
-					float y = sensorEvent.values[1];
-					float z = sensorEvent.values[2];
-
-//					String temp= Calendar.getInstance().getTime().toString().replaceAll(":","");
-//					String T[] = temp.split(" ");
-					Long sub=System.currentTimeMillis();
-
-					String X=Float.toString(x);
-					String Y=Float.toString(y);
-					String Z=Float.toString(z);
-
-					if(record == true && record1==true){
-//						data1.add(new String[] {T[3],X,Y,Z});
-						data1.add(new String[] {Long.toString(sub-start_time),X,Y,Z});
-						textView2.setText("Gyro Values\n"+X+"\n"+Y+"\n"+Z);
-						addEntry(sensorEvent);
-						record = false;
-
-					}
-
-				}
-
-			}
-
-			@Override
-			public void onAccuracyChanged(Sensor sensor, int i) {
-			}
-		};
-
-		// Register the listener
-		sensorManager.registerListener(gyroscopeSensorListener,
-				gyroscopeSensor, 1000);
-
-		feedMultiple();
-		feedMultiple1();
 	}
 
 	private void addEntry(SensorEvent event) {
@@ -424,7 +676,6 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
 
 		}
 	}
-
 
 	private LineDataSet createSet() {
 
@@ -537,39 +788,5 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
 					REQUEST_EXTERNAL_STORAGE
 			);
 		}
-	}
-
-	@Override
-	public void onSensorChanged(SensorEvent sensorEvent) {
-		Sensor mySensor = sensorEvent.sensor;
-
-		if (mySensor.getType() == Sensor.TYPE_ACCELEROMETER) {
-			float x = sensorEvent.values[0];
-			float y = sensorEvent.values[1];
-			float z = sensorEvent.values[2];
-
-//			String temp= Calendar.getInstance().getTime().toString().replaceAll(":","");
-//			String T[] = temp.split(" ");
-			Long sub=System.currentTimeMillis();
-
-			String X=Float.toString(x);
-			String Y=Float.toString(y);
-			String Z=Float.toString(z);
-
-			if(record11 == true && record1==true){
-//				data.add(new String[] {T[3],X,Y,Z});
-				data.add(new String[] {Long.toString(sub-start_time),X,Y,Z});
-				textView.setText("Acclero Values\n"+X+"\n"+Y+"\n"+Z);
-				addEntry1(sensorEvent);
-				record11 = false;
-
-			}
-
-		}
-	}
-
-	@Override
-	public void onAccuracyChanged(Sensor sensor, int i) {
-
 	}
 }
