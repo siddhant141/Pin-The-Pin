@@ -73,7 +73,9 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
 	LineData ldata1;
 	Thread thread1;
 
-	String baseDir = Environment.getExternalStorageDirectory().getAbsolutePath()+"/AccApp";
+//	String baseDir = Environment.getExternalStorageDirectory().getAbsolutePath()+File.separator+"AccApp";
+//	String baseDir = getExternalFilesDir(null)+File.separator+"AccApp";
+	String baseDir="";
 	String fileName;
 	String filePath;
 	File f;
@@ -102,7 +104,16 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
 		textView = findViewById(R.id.textView);
 		textView2 = findViewById(R.id.textView2);
 
-		verifyStoragePermissions(this);
+		baseDir = getExternalFilesDir(null)+File.separator+"AccApp";
+
+//		verifyStoragePermissions(this);
+		/*File createFolder1=new File(baseDir);
+		if(!createFolder1.mkdirs())
+			Log.d("Accapp","not created dummy folder");
+		else
+		{
+			Log.d("Accapp","created dummy folder");
+		}*/
 		charting();
 
 		startButton.setEnabled(true);
@@ -226,9 +237,10 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
 				lastch=written.substring(written.length() - 1);
 			}
 			fileName= DateFormat.getDateTimeInstance().format(new Date()).replaceAll(" ","_")+lastch+key_down+"&"+key_up+".csv";
-			filePath = baseDir + "/Accelerometer" + File.separator + fileName;
-			File createFolder=new File(baseDir + "/Accelerometer");
-			createFolder.mkdirs();
+			filePath = baseDir + File.separator +"Accelerometer" + File.separator + fileName;
+			File createFolder=new File(baseDir + File.separator + "Accelerometer");
+			if(!createFolder.mkdirs())
+				Log.d("Accapp","not created folder");
 			f = new File(filePath);
 			try {
 				f.createNewFile();
@@ -247,9 +259,10 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
 			//gyro-----------------------------------------------------
 			fileName= DateFormat.getDateTimeInstance().format(new Date()).replaceAll(" ","_")+lastch+key_down+"&"+key_up+".csv";
 //			fileName= DateFormat.getDateTimeInstance().format(new Date()).replaceAll(" ","_")+".csv";
-			filePath = baseDir + "/Gyro" + File.separator + fileName;
-			createFolder=new File(baseDir + "/Gyro");
-			createFolder.mkdirs();
+			filePath = baseDir + File.separator + "Gyro" + File.separator + fileName;
+			createFolder=new File(baseDir + File.separator + "Gyro");
+			if(createFolder.mkdirs())
+				Log.d("Accapp","created folder");
 			f = new File(filePath);
 			try {
 				f.createNewFile();
@@ -269,9 +282,11 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
 
 			fileName= DateFormat.getDateTimeInstance().format(new Date()).replaceAll(" ","_")+lastch+press_time+".csv";
 //			fileName= DateFormat.getDateTimeInstance().format(new Date()).replaceAll(" ","_")+".csv";
-			filePath = baseDir + "/Grav" + File.separator + fileName;
-			createFolder=new File(baseDir + "/Grav");
-			createFolder.mkdirs();
+			filePath = baseDir + File.separator + "Grav" + File.separator + fileName;
+			createFolder=new File(baseDir + File.separator + "Grav");
+			if(!createFolder.mkdirs())
+				Log.d("Accapp","not created folder");
+			Log.d("Accapp","created folder");
 			f = new File(filePath);
 			try {
 				f.createNewFile();
@@ -291,9 +306,9 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
 			//writer -> acc
 			//data -> acc
 			//data1 -> gyro
-			writer2.writeAll(data2);
-			writer1.writeAll(data1);
 			writer.writeAll(data);
+			writer1.writeAll(data1);
+			writer2.writeAll(data2);
 			data.clear();
 			data1.clear();
 			data2.clear();
@@ -328,15 +343,15 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
 		senSensorManager = (SensorManager) getSystemService(Context.SENSOR_SERVICE);
 		senAccelerometer = senSensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER);
 //		senSensorManager.registerListener(this, senAccelerometer , SensorManager.SENSOR_DELAY_NORMAL);
-		senSensorManager.registerListener(this, senAccelerometer ,(int)pow(10,4));
+		senSensorManager.registerListener(this, senAccelerometer ,SensorManager.SENSOR_DELAY_FASTEST);
 
 //        gyro
 //		SensorManager sensorManager = (SensorManager) getSystemService(Context.SENSOR_SERVICE);;
 		Sensor gyroscopeSensor = senSensorManager.getDefaultSensor(Sensor.TYPE_GYROSCOPE);
-		senSensorManager.registerListener(this,gyroscopeSensor,(int)pow(10,4));
+		senSensorManager.registerListener(this,gyroscopeSensor,SensorManager.SENSOR_DELAY_FASTEST);
 
 		Sensor gravitySensor = senSensorManager.getDefaultSensor(Sensor.TYPE_GRAVITY);
-		senSensorManager.registerListener(this,gravitySensor,(int)pow(10,4));
+		senSensorManager.registerListener(this,gravitySensor,SensorManager.SENSOR_DELAY_FASTEST);
 
 		//magnetic field (magnetometer)
 		/*Sensor magneticField = senSensorManager.getDefaultSensor(Sensor.TYPE_MAGNETIC_FIELD);
@@ -788,5 +803,73 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
 					REQUEST_EXTERNAL_STORAGE
 			);
 		}
+		else
+		{
+			Log.d("Accapp","write permission granted");
+		}
+
+		permission = ActivityCompat.checkSelfPermission(activity, Manifest.permission.READ_EXTERNAL_STORAGE);
+
+		if (permission != PackageManager.PERMISSION_GRANTED) {
+			// We don't have permission so prompt the user
+			ActivityCompat.requestPermissions(
+					activity,
+					PERMISSIONS_STORAGE,
+					REQUEST_EXTERNAL_STORAGE
+			);
+		}
+		else
+		{
+			Log.d("Accapp","read permission granted");
+		}
 	}
+
+	/*getExternalStorageDirectory
+	Added in API level 1
+	File getExternalStorageDirectory ()
+	Return the primary shared/external storage directory. This directory may not currently be accessible if it has been mounted by the user on their computer, has been removed from the device, or some other problem has happened. You can determine its current state with getExternalStorageState().
+	Note: don't be confused by the word "external" here. This directory can better be thought as media/shared storage. It is a filesystem that can hold a relatively large amount of data and that is shared across all applications (does not enforce permissions). Traditionally this is an SD card, but it may also be implemented as built-in storage in a device that is distinct from the protected internal storage and can be mounted as a filesystem on a computer.
+	On devices with multiple users (as described by UserManager), each user has their own isolated shared storage. Applications only have access to the shared storage for the user they're running as.
+	In devices with multiple shared/external storage directories, this directory represents the primary storage that the user will interact with. Access to secondary storage is available through getExternalFilesDirs(String), getExternalCacheDirs(), and getExternalMediaDirs().
+	Applications should not directly use this top-level directory, in order to avoid polluting the user's root namespace. Any files that are private to the application should be placed in a directory returned by Context.getExternalFilesDir, which the system will take care of deleting if the application is uninstalled. Other shared files should be placed in one of the directories returned by getExternalStoragePublicDirectory(String).
+	Writing to this path requires the WRITE_EXTERNAL_STORAGE permission, and starting in KITKAT, read access requires the READ_EXTERNAL_STORAGE permission, which is automatically granted if you hold the write permission.
+	Starting in KITKAT, if your application only needs to store internal data, consider using getExternalFilesDir(String), getExternalCacheDir(), or getExternalMediaDirs(), which require no permissions to read or write.
+	This path may change between platform versions, so applications should only persist relative paths.
+	Here is an example of typical code to monitor the state of external storage:
+	BroadcastReceiver mExternalStorageReceiver;
+	boolean mExternalStorageAvailable = false;
+	boolean mExternalStorageWriteable = false;
+
+	void updateExternalStorageState() {
+		String state = Environment.getExternalStorageState();
+		if (Environment.MEDIA_MOUNTED.equals(state)) {
+			mExternalStorageAvailable = mExternalStorageWriteable = true;
+		} else if (Environment.MEDIA_MOUNTED_READ_ONLY.equals(state)) {
+			mExternalStorageAvailable = true;
+			mExternalStorageWriteable = false;
+		} else {
+			mExternalStorageAvailable = mExternalStorageWriteable = false;
+		}
+		handleExternalStorageState(mExternalStorageAvailable,
+				mExternalStorageWriteable);
+	}
+
+	void startWatchingExternalStorage() {
+		mExternalStorageReceiver = new BroadcastReceiver() {
+			@Override
+			public void onReceive(Context context, Intent intent) {
+				Log.i("test", "Storage: " + intent.getData());
+				updateExternalStorageState();
+			}
+		};
+		IntentFilter filter = new IntentFilter();
+		filter.addAction(Intent.ACTION_MEDIA_MOUNTED);
+		filter.addAction(Intent.ACTION_MEDIA_REMOVED);
+		registerReceiver(mExternalStorageReceiver, filter);
+		updateExternalStorageState();
+	}
+
+	void stopWatchingExternalStorage() {
+		unregisterReceiver(mExternalStorageReceiver);
+	}*/
 }
