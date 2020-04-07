@@ -40,7 +40,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
 	String fileName;
 	String filePath;
 	File f;
-	CSVWriter writer,writer1,writer2,writer3,writer4;
+	CSVWriter writer;
 	boolean record=false;
 
 	ConstraintLayout layout;
@@ -53,12 +53,15 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
 	Button startButton;
 	Button stopButton;
 	Button b1,b2,b3,b4,b5,b6,b7,b8,b9,b0;
-	TextView tv;
+	TextView tv,counttv;
 
 	List<String[]> data_grav = new ArrayList<String[]>();
 	List<String[]> data_acc_w = new ArrayList<String[]>();
 	List<String[]> data_acc_wo = new ArrayList<String[]>();
 	List<String[]> data_gyro = new ArrayList<String[]>();
+
+	int []a;
+	int count;
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
@@ -78,18 +81,10 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
 		b9 = findViewById(R.id.b9);
 		b0 = findViewById(R.id.b0);
 		tv = findViewById(R.id.display_key);
+        counttv = findViewById(R.id.count);
 		layout = findViewById(R.id.layout);
 
-		b1.setEnabled(false);
-		b2.setEnabled(false);
-		b3.setEnabled(false);
-		b4.setEnabled(false);
-		b5.setEnabled(false);
-		b6.setEnabled(false);
-		b7.setEnabled(false);
-		b8.setEnabled(false);
-		b9.setEnabled(false);
-		b0.setEnabled(false);
+		disable();
 		tv.setText("Press any key");
 		tv.setBackgroundColor(Color.GRAY);
 
@@ -134,16 +129,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
 			startButton.setEnabled(false);
 			stopButton.setEnabled(true);
 
-			b1.setEnabled(true);
-			b2.setEnabled(true);
-			b3.setEnabled(true);
-			b4.setEnabled(true);
-			b5.setEnabled(true);
-			b6.setEnabled(true);
-			b7.setEnabled(true);
-			b8.setEnabled(true);
-			b9.setEnabled(true);
-			b0.setEnabled(true);
+			enable();
 
 			start_time=System.currentTimeMillis();
 
@@ -152,11 +138,15 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
 			data_acc_w.add(new String[] {"Time","X","Y","Z"});
 			data_acc_wo.add(new String[] {"Time","X","Y","Z"});
 
+			count=40;
 			Random random=new Random();
+			a=new int[10];
 			tv.setText("Press "+ random.nextInt(10) + "\nor go nuts");
 		});
 
 		stopButton.setOnClickListener(view -> {
+			disable();
+
 			data_acc_wo.clear();
 			data_acc_w.clear();
 			data_gyro.clear();
@@ -166,6 +156,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
 			record=false;
 			layout.setBackgroundColor(Color.BLACK);
 			tv.setText("Press any key");
+			counttv.setText("40 left");
 		});
 	}
 
@@ -177,37 +168,48 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
 
 	void up(String lastch)
 	{
-		b1.setEnabled(false);
-		b2.setEnabled(false);
-		b3.setEnabled(false);
-		b4.setEnabled(false);
-		b5.setEnabled(false);
-		b6.setEnabled(false);
-		b7.setEnabled(false);
-		b8.setEnabled(false);
-		b9.setEnabled(false);
-		b0.setEnabled(false);
+		disable();
 
 		key_up=System.currentTimeMillis();
+		count--;
 
 		new Handler().postDelayed(() -> {
 			saveFile(lastch);
+		},1000);
 
-			b1.setEnabled(true);
-			b2.setEnabled(true);
-			b3.setEnabled(true);
-			b4.setEnabled(true);
-			b5.setEnabled(true);
-			b6.setEnabled(true);
-			b7.setEnabled(true);
-			b8.setEnabled(true);
-			b9.setEnabled(true);
-			b0.setEnabled(true);
+		new Handler().postDelayed(() -> {
+			enable();
 
 			layout.setBackgroundColor(Color.GREEN);
 			Random random=new Random();
-			tv.setText("Press "+ random.nextInt(10) + "\nor go nuts");
-		},1200);
+			int temp=random.nextInt(10);
+			int flag=0;
+			for(int i=0;i<10;i++)
+			{
+				if(a[i]<4)
+				{
+					flag=1;
+					break;
+				}
+			}
+			if(flag==1)
+			{
+				while(true)
+				{
+					if(a[temp]<4)
+						break;
+					else
+						temp=(temp+1)%10;
+				}
+				tv.setText("Press "+ temp + "\nor go nuts");
+			}
+			else
+			{
+				disable();
+				tv.setText("Press Stop");
+			}
+			counttv.setText(count+" left");
+		},1000);
 	}
 
 	void saveFile(String lastch)
@@ -394,11 +396,13 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
 			{
 				case MotionEvent.ACTION_DOWN:
 					down();
+					a[1]++;
 					break;
 				case MotionEvent.ACTION_UP:
 					up("1");
 					break;
 			}
+
 			return true;
 		});
 		b2.setOnTouchListener((v, event) -> {
@@ -406,11 +410,13 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
 			{
 				case MotionEvent.ACTION_DOWN:
 					down();
+					a[2]++;
 					break;
 				case MotionEvent.ACTION_UP:
 					up("2");
 					break;
 			}
+
 			return true;
 		});
 		b3.setOnTouchListener((v, event) -> {
@@ -418,11 +424,13 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
 			{
 				case MotionEvent.ACTION_DOWN:
 					down();
+					a[3]++;
 					break;
 				case MotionEvent.ACTION_UP:
 					up("3");
 					break;
 			}
+
 			return true;
 		});
 		b4.setOnTouchListener((v, event) -> {
@@ -430,11 +438,13 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
 			{
 				case MotionEvent.ACTION_DOWN:
 					down();
+					a[4]++;
 					break;
 				case MotionEvent.ACTION_UP:
 					up("4");
 					break;
 			}
+
 			return true;
 		});
 		b5.setOnTouchListener((v, event) -> {
@@ -442,11 +452,13 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
 			{
 				case MotionEvent.ACTION_DOWN:
 					down();
+					a[5]++;
 					break;
 				case MotionEvent.ACTION_UP:
 					up("5");
 					break;
 			}
+
 			return true;
 		});
 		b6.setOnTouchListener((v, event) -> {
@@ -454,11 +466,13 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
 			{
 				case MotionEvent.ACTION_DOWN:
 					down();
+					a[6]++;
 					break;
 				case MotionEvent.ACTION_UP:
 					up("6");
 					break;
 			}
+
 			return true;
 		});
 		b7.setOnTouchListener((v, event) -> {
@@ -466,11 +480,13 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
 			{
 				case MotionEvent.ACTION_DOWN:
 					down();
+					a[7]++;
 					break;
 				case MotionEvent.ACTION_UP:
 					up("7");
 					break;
 			}
+
 			return true;
 		});
 		b8.setOnTouchListener((v, event) -> {
@@ -478,11 +494,13 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
 			{
 				case MotionEvent.ACTION_DOWN:
 					down();
+					a[8]++;
 					break;
 				case MotionEvent.ACTION_UP:
 					up("8");
 					break;
 			}
+
 			return true;
 		});
 		b9.setOnTouchListener((v, event) -> {
@@ -490,11 +508,13 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
 			{
 				case MotionEvent.ACTION_DOWN:
 					down();
+					a[9]++;
 					break;
 				case MotionEvent.ACTION_UP:
 					up("9");
 					break;
 			}
+
 			return true;
 		});
 		b0.setOnTouchListener((v, event) -> {
@@ -502,6 +522,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
 			{
 				case MotionEvent.ACTION_DOWN:
 					down();
+					a[0]++;
 					break;
 				case MotionEvent.ACTION_UP:
 					up("0");
@@ -510,4 +531,32 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
 			return true;
 		});
 	}
+
+	void disable()
+    {
+        b1.setEnabled(false);
+        b2.setEnabled(false);
+        b3.setEnabled(false);
+        b4.setEnabled(false);
+        b5.setEnabled(false);
+        b6.setEnabled(false);
+        b7.setEnabled(false);
+        b8.setEnabled(false);
+        b9.setEnabled(false);
+        b0.setEnabled(false);
+    }
+
+    void enable()
+    {
+        b1.setEnabled(true);
+        b2.setEnabled(true);
+        b3.setEnabled(true);
+        b4.setEnabled(true);
+        b5.setEnabled(true);
+        b6.setEnabled(true);
+        b7.setEnabled(true);
+        b8.setEnabled(true);
+        b9.setEnabled(true);
+        b0.setEnabled(true);
+    }
 }
