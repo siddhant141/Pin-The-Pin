@@ -60,7 +60,9 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
 	List<String[]> data_acc_wo = new ArrayList<String[]>();
 	List<String[]> data_gyro = new ArrayList<String[]>();
 
-	int []a;
+	int []a=new int[]{0,1,2,3,4,5,6,7,8,9,0,2,4,6,8,0,3,5,7,9,1,3,6,9,2,5,8,1,4,7,0,4,8,2,6,0,5,9,3,
+			7,1,5,0,6,1,6,2,7,2,8,3,8,4,9,4,0,7,3,9,5,1,7,4,1,8,5,2,9,6,3,0,8,6,4,2,0,9,7,5,3,1,9,8,
+			7,6,5,4,3,2,1,0};
 	int count;
 
 	@Override
@@ -138,10 +140,12 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
 			data_acc_w.add(new String[] {"Time","X","Y","Z"});
 			data_acc_wo.add(new String[] {"Time","X","Y","Z"});
 
-			count=40;
+			/*count=40;
 			Random random=new Random();
 			a=new int[10];
-			tv.setText("Press "+ random.nextInt(10) + "\nor go nuts");
+			tv.setText("Press "+ random.nextInt(10) + "\nor go nuts");*/
+			count=0;
+			tv.setText("Press "+ a[count] + "\nor go nuts");
 		});
 
 		stopButton.setOnClickListener(view -> {
@@ -156,7 +160,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
 			record=false;
 			layout.setBackgroundColor(Color.BLACK);
 			tv.setText("Press any key");
-			counttv.setText("40 left");
+			counttv.setText("91 left");
 		});
 	}
 
@@ -171,11 +175,11 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
 		disable();
 
 		key_up=System.currentTimeMillis();
-		count--;
+		count++;
 
 		new Handler().postDelayed(() -> {
 			saveFile(lastch);
-		},1000);
+		},500);
 
 		new Handler().postDelayed(() -> {
 			enable();
@@ -184,7 +188,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
 			Random random=new Random();
 			int temp=random.nextInt(10);
 			int flag=0;
-			for(int i=0;i<10;i++)
+			/*for(int i=0;i<10;i++)
 			{
 				if(a[i]<4)
 				{
@@ -207,9 +211,18 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
 			{
 				disable();
 				tv.setText("Press Stop");
+			}*/
+			if(count<91)
+			{
+				tv.setText("Press "+ a[count] + "\nor go nuts");
 			}
-			counttv.setText(count+" left");
-		},1000);
+			else
+			{
+				disable();
+				tv.setText("Press Stop");
+			}
+			counttv.setText(91-count+" left");
+		},500);
 	}
 
 	void saveFile(String lastch)
