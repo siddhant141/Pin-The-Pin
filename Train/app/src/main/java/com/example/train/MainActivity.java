@@ -186,9 +186,9 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
 
 			layout.setBackgroundColor(Color.GREEN);
 			Random random=new Random();
-			int temp=random.nextInt(10);
+			/*int temp=random.nextInt(10);
 			int flag=0;
-			/*for(int i=0;i<10;i++)
+			for(int i=0;i<10;i++)
 			{
 				if(a[i]<4)
 				{
