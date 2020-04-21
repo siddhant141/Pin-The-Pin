@@ -1,0 +1,40 @@
+{
+  "project_info": {
+    "project_number": "239836977485",
+    "firebase_url": "https://pinthepin-7n013.firebaseio.com",
+    "project_id": "pinthepin-7n013",
+    "storage_bucket": "pinthepin-7n013.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:239836977485:android:127c93aabd32f1a9ce7f04",
+        "android_client_info": {
+          "package_name": "com.example.pinthepin"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "239836977485-k53vl9d3d0miefdk17a5apj27tp7mgq7.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCF5p-Wkz_keUTRoMWsaXqf5OIEiCqg34k"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "239836977485-k53vl9d3d0miefdk17a5apj27tp7mgq7.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

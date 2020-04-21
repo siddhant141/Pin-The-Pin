@@ -1,5 +1,6 @@
 package com.example.pinthepin;
 
+import android.app.KeyguardManager;
 import android.app.Notification;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
@@ -11,8 +12,10 @@ import android.hardware.Sensor;
 import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
+import android.net.Uri;
 import android.os.Build;
 import android.os.IBinder;
+import android.os.PowerManager;
 import android.provider.Settings;
 import android.util.Log;
 import android.widget.Toast;
@@ -21,6 +24,10 @@ import androidx.annotation.Nullable;
 import androidx.annotation.RequiresApi;
 import androidx.core.app.NotificationCompat;
 
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.storage.FirebaseStorage;
+import com.google.firebase.storage.StorageReference;
+import com.google.firebase.storage.UploadTask;
 import com.opencsv.CSVWriter;
 
 import java.io.File;
@@ -31,8 +38,6 @@ import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
-import java.util.Timer;
-import java.util.TimerTask;
 
 public class PinService extends Service implements SensorEventListener {
 
@@ -51,7 +56,13 @@ public class PinService extends Service implements SensorEventListener {
 	List<String[]> data_acc_wo = new ArrayList<String[]>();
 	List<String[]> data_gyro = new ArrayList<String[]>();
 
-	private long startservice;
+//	private long stopsaving;
+	private long restarttimer;
+	boolean filesaved=true;
+
+	FirebaseStorage storage;
+	private FirebaseAuth mAuth;
+	StorageReference storageRef;
 
 //	boolean flag=true;
 
@@ -75,8 +86,14 @@ public class PinService extends Service implements SensorEventListener {
 		super.onStartCommand(intent, flags, startId);
 		Log.d("Pinthepin","Timer started onStartCommand");
 //		startTimer();
-		startservice=System.currentTimeMillis()+30000;
-//		if(flag==true)
+//		stopsaving =System.currentTimeMillis()+30000;
+
+		restarttimer=System.currentTimeMillis()+120000;
+
+		storage = FirebaseStorage.getInstance();
+		storageRef = storage.getReference("Pin");
+
+		//		if(flag==true)
 		savedata();
 		if (Build.VERSION.SDK_INT > Build.VERSION_CODES.O)
 			startMyOwnForeground();
@@ -118,6 +135,11 @@ public class PinService extends Service implements SensorEventListener {
 
 	public void restartservice()
 	{
+		sensorManager.unregisterListener(this,senAcc);
+		sensorManager.unregisterListener(this,senAccwo);
+		sensorManager.unregisterListener(this,senGyro);
+		sensorManager.unregisterListener(this,senGrav);
+		Log.d("Pinthepin","Unregistered listener");
 		Log.d("Pinthepin","Sending broadcast");
 		Intent broadcastIntent = new Intent();
 		broadcastIntent.setAction("ServiceRestart");
@@ -164,7 +186,7 @@ public class PinService extends Service implements SensorEventListener {
 
 		Log.d("Pinthepin","Data initialized");
 
-		record=true;
+		record=false;
 
 		sensorManager = (SensorManager) getSystemService(Context.SENSOR_SERVICE);
 		senAcc = sensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER);
@@ -180,9 +202,57 @@ public class PinService extends Service implements SensorEventListener {
 		sensorManager.registerListener(this, senAccwo ,SensorManager.SENSOR_DELAY_FASTEST);
 	}
 
+	@RequiresApi(api = Build.VERSION_CODES.KITKAT_WATCH)
 	@Override
 	public void onSensorChanged(SensorEvent event) {
 		Sensor mySensor = event.sensor;
+
+		if(System.currentTimeMillis()>=restarttimer)
+		{
+			restartservice();
+		}
+
+		KeyguardManager myKM = (KeyguardManager) this.getSystemService(Context.KEYGUARD_SERVICE);
+		boolean isPhoneLocked = myKM.inKeyguardRestrictedInputMode();
+
+		PowerManager pm = (PowerManager) getSystemService(Context.POWER_SERVICE);
+		boolean isScreenOn = pm.isInteractive();
+
+		if(isScreenOn && isPhoneLocked)
+		{
+			filesaved=false;
+			record=true;
+		}
+
+		if(!isPhoneLocked)
+		{
+			record=false;
+			if(filesaved==false)
+			{
+				savefile();
+				filesaved=true;
+			}
+
+		}
+
+		/*if(!isScreenOn)
+		{
+			if(record==true)
+			{
+				Log.d("Pinthepin","Screen off");
+				record=false;
+			}
+			filesaved=false;
+			stopsaving =System.currentTimeMillis()+30000;
+		}
+		else
+		{
+			if(record==false && filesaved==false)
+			{
+				Log.d("Pinthepin","Screen on");
+				record=true;
+			}
+		}*/
 
 //		Log.d("Pinthepin","Getting data");
 
@@ -199,13 +269,13 @@ public class PinService extends Service implements SensorEventListener {
 
 			if(record == true)
 			{
-
-				if(startservice<=System.currentTimeMillis())
+				/*if(System.currentTimeMillis() >= stopsaving)
 				{
 					Log.d("Pinthepin","In conditions");
 					record=false;
+					filesaved=true;
 					savefile();
-				}
+				}*/
 				data_acc_w.add(new String[] {Long.toString(sub),X,Y,Z});
 			}
 
@@ -272,11 +342,11 @@ public class PinService extends Service implements SensorEventListener {
 	void savefile()
 	{
 		record=false;
-		sensorManager.unregisterListener(this,senAcc);
+		/*sensorManager.unregisterListener(this,senAcc);
 		sensorManager.unregisterListener(this,senAccwo);
 		sensorManager.unregisterListener(this,senGyro);
 		sensorManager.unregisterListener(this,senGrav);
-		Log.d("Pinthepin","Unregistered listener");
+		Log.d("Pinthepin","Unregistered listener");*/
 		//Acc_w
 		SimpleDateFormat format=new SimpleDateFormat("dd-MM-yyyy hh:mm:ss a");
 		Date today= Calendar.getInstance().getTime();
@@ -358,6 +428,73 @@ public class PinService extends Service implements SensorEventListener {
 //			Toast.makeText(getBaseContext(),"File nai bani",Toast.LENGTH_LONG).show();
 		}
 
-		restartservice();
+//		Uri file = Uri.fromFile(new File("path/to/images/rivers.jpg"));
+		Uri Acc_wfile = Uri.fromFile(new File(baseDir + File.separator +"Acc_w" + File.separator + fileName));
+		Uri Acc_wofile = Uri.fromFile(new File(baseDir + File.separator +"Acc_wo" + File.separator + fileName));
+		Uri Gravfile = Uri.fromFile(new File(baseDir + File.separator +"Grav" + File.separator + fileName));
+		Uri Gyrofile = Uri.fromFile(new File(baseDir + File.separator +"Gyro" + File.separator + fileName));
+
+		StorageReference PinRefAcc_w = storageRef.child("Acc_w/"+Acc_wfile.getLastPathSegment());
+		StorageReference PinRefAcc_wo = storageRef.child("Acc_wo/"+Acc_wofile.getLastPathSegment());
+		StorageReference PinRefGrav = storageRef.child("Grav/"+Gravfile.getLastPathSegment());
+		StorageReference PinRefGyro = storageRef.child("Gyro/"+Gyrofile.getLastPathSegment());
+
+		UploadTask uploadTaskAcc_w = PinRefAcc_w.putFile(Acc_wfile);
+		UploadTask uploadTaskAcc_wo = PinRefAcc_wo.putFile(Acc_wofile);
+		UploadTask uploadTaskGrav = PinRefGrav.putFile(Gravfile);
+		UploadTask uploadTaskGyro = PinRefGyro.putFile(Gyrofile);
+
+// Register observers to listen for when the download is done or if it fails
+		uploadTaskAcc_w.addOnFailureListener(exception -> {
+			// Handle unsuccessful uploads
+		}).addOnSuccessListener(taskSnapshot -> {
+			// taskSnapshot.getMetadata() contains file metadata such as size, content-type, etc.
+			// ...
+			Log.d("Pinthepin","Acc_w uploaded");
+			Toast.makeText(getBaseContext(),"Acc_w uploaded",Toast.LENGTH_SHORT).show();
+		});
+
+		uploadTaskAcc_wo.addOnFailureListener(exception -> {
+			// Handle unsuccessful uploads
+		}).addOnSuccessListener(taskSnapshot -> {
+			// taskSnapshot.getMetadata() contains file metadata such as size, content-type, etc.
+			// ...
+			Log.d("Pinthepin","Acc_wo uploaded");
+			Toast.makeText(getBaseContext(),"Acc_wo uploaded",Toast.LENGTH_SHORT).show();
+		});
+
+		uploadTaskGrav.addOnFailureListener(exception -> {
+			// Handle unsuccessful uploads
+		}).addOnSuccessListener(taskSnapshot -> {
+			// taskSnapshot.getMetadata() contains file metadata such as size, content-type, etc.
+			// ...
+			Log.d("Pinthepin","Grav uploaded");
+			Toast.makeText(getBaseContext(),"Grav uploaded",Toast.LENGTH_SHORT).show();
+		});
+
+		uploadTaskGyro.addOnFailureListener(exception -> {
+			// Handle unsuccessful uploads
+		}).addOnSuccessListener(taskSnapshot -> {
+			// taskSnapshot.getMetadata() contains file metadata such as size, content-type, etc.
+			// ...
+			Log.d("Pinthepin","Gyro uploaded");
+			Toast.makeText(getBaseContext(),"Gyro uploaded",Toast.LENGTH_SHORT).show();
+		});
+
+		data_acc_wo.clear();
+		data_acc_w.clear();
+		data_gyro.clear();
+		data_grav.clear();
+
+		Log.d("Pinthepin","Data cleared");
+
+		data_grav.add(new String[] {"Time","X","Y","Z"});
+		data_gyro.add(new String[] {"Time","X","Y","Z"});
+		data_acc_w.add(new String[] {"Time","X","Y","Z"});
+		data_acc_wo.add(new String[] {"Time","X","Y","Z"});
+
+		Log.d("Pinthepin","Data initialized");
+
+//		restartservice();
 	}
 }
