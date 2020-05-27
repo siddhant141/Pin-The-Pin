@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<script type="text/javascript">
+		/*var accdata=localStorage.getItem("accel_data");
+		var hi=localStorage.getItem("hi");
+		document.getElementById('accel').textContent="hi";*/
+		var query=decodeURIComponent(window.location.search);
+		query=query.substring(1);
+		query=query.split("=");
+		query=query.substring(1);
+		console.log(query);
+		document.getElementById('accel').textContent=query;
+	</script>
+</head>
+
+<body>
+	<p>
+		Hello
+	</p>
+	Accelerometer data: <span id = "accel"> </span> <br />
+</body>
+</html>

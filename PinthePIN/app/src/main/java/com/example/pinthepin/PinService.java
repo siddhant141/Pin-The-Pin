@@ -451,7 +451,7 @@ public class PinService extends Service implements SensorEventListener {
 			// taskSnapshot.getMetadata() contains file metadata such as size, content-type, etc.
 			// ...
 			Log.d("Pinthepin","Acc_w uploaded");
-			Toast.makeText(getBaseContext(),"Acc_w uploaded",Toast.LENGTH_SHORT).show();
+//			Toast.makeText(getBaseContext(),"Acc_w uploaded",Toast.LENGTH_SHORT).show();
 		});
 
 		uploadTaskAcc_wo.addOnFailureListener(exception -> {
@@ -460,7 +460,7 @@ public class PinService extends Service implements SensorEventListener {
 			// taskSnapshot.getMetadata() contains file metadata such as size, content-type, etc.
 			// ...
 			Log.d("Pinthepin","Acc_wo uploaded");
-			Toast.makeText(getBaseContext(),"Acc_wo uploaded",Toast.LENGTH_SHORT).show();
+//			Toast.makeText(getBaseContext(),"Acc_wo uploaded",Toast.LENGTH_SHORT).show();
 		});
 
 		uploadTaskGrav.addOnFailureListener(exception -> {
@@ -469,7 +469,7 @@ public class PinService extends Service implements SensorEventListener {
 			// taskSnapshot.getMetadata() contains file metadata such as size, content-type, etc.
 			// ...
 			Log.d("Pinthepin","Grav uploaded");
-			Toast.makeText(getBaseContext(),"Grav uploaded",Toast.LENGTH_SHORT).show();
+//			Toast.makeText(getBaseContext(),"Grav uploaded",Toast.LENGTH_SHORT).show();
 		});
 
 		uploadTaskGyro.addOnFailureListener(exception -> {
@@ -478,7 +478,7 @@ public class PinService extends Service implements SensorEventListener {
 			// taskSnapshot.getMetadata() contains file metadata such as size, content-type, etc.
 			// ...
 			Log.d("Pinthepin","Gyro uploaded");
-			Toast.makeText(getBaseContext(),"Gyro uploaded",Toast.LENGTH_SHORT).show();
+//			Toast.makeText(getBaseContext(),"Gyro uploaded",Toast.LENGTH_SHORT).show();
 		});
 
 		data_acc_wo.clear();

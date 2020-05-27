@@ -1,0 +1,111 @@
+<!DOCTYPE html> 
+<html> 
+<head> 
+  <script type="text/javascript"> 
+	
+	// var options = {
+	//   enableHighAccuracy: true,
+	//   timeout: 5000,
+	//   maximumAge: 0
+	// };
+
+	var acc_w=[];
+	var gyro=[];
+	var acc_wo=[];
+	
+	// function success(pos) {
+	//   var crd = pos.coords;
+
+	//   console.log('Your current position is:');
+	//   console.log(`Latitude : ${crd.latitude}`);
+	//   console.log(`Longitude: ${crd.longitude}`);
+	//   console.log(`More or less ${crd.accuracy} meters.`);
+	//   document.getElementById('test').innerHTML = crd.latitude + ", "+ crd.longitude;
+	// }
+
+	// function error(err) {
+	//   console.warn(`ERROR(${err.code}): ${err.message}`);
+	// }
+
+	// navigator.geolocation.getCurrentPosition(success, error, options);
+
+	if(window.DeviceMotionEvent){		
+		window.addEventListener("devicemotion", motion, false);
+		console.log("Listener added");
+	}else{
+		console.log("DeviceMotionEvent is not supported");
+	} 
+
+	function motion(event){
+		// console.log("Accelerometer: "
+		// + event.accelerationIncludingGravity.x + ", "
+		// + event.accelerationIncludingGravity.y + ", "
+		// + event.accelerationIncludingGravity.z
+		// );
+		//Acc_w
+		// document.getElementById('accelx').textContent = event.accelerationIncludingGravity.x
+		// document.getElementById('accely').textContent = event.accelerationIncludingGravity.y
+		// document.getElementById('accelz').textContent = event.accelerationIncludingGravity.z
+		// console.log(event.interval);
+		//Acc_wo
+		// document.getElementById('accelx').textContent = event.acceleration.x
+		// document.getElementById('accely').textContent = event.acceleration.y
+		// document.getElementById('accelz').textContent = event.acceleration.z
+		//Gyro
+		// document.getElementById('gyrox').textContent = event.rotationRate.alpha;
+		// document.getElementById('gyroy').textContent =  event.rotationRate.beta;
+		// document.getElementById('gyroz').textContent =  event.rotationRate.gamma ;
+		var temp=[event.accelerationIncludingGravity.x,event.accelerationIncludingGravity.y,event.accelerationIncludingGravity.z];
+  	    acc_w.push(temp);
+		temp=[event.acceleration.x,event.acceleration.y,event.acceleration.z];
+  	    acc_wo.push(temp);
+		temp=[event.rotationRate.x,event.rotationRate.y,event.rotationRate.z];
+  	    gyro.push(temp);
+	}
+
+	function create()
+	{
+		console.log("button pressed");
+	}
+
+	// let gyroscope = new Gyroscope({frequency: 60});
+	// gyroscope.addEventListener('reading', e => {
+	// 	// console.log("Angular velocity along the X-axis " + gyroscope.x);
+	// 	// console.log("Angular velocity along the Y-axis " + gyroscope.y);
+	// 	// console.log("Angular velocity along the Z-axis " + gyroscope.z);	
+	// 	document.getElementById('gyrox').textContent = gyroscope.x;
+	// 	document.getElementById('gyroy').textContent =  gyroscope.y;
+	// 	document.getElementById('gyroz').textContent =  gyroscope.z ;
+	// 	var temp=[gyroscope.x,gyroscope.y,gyroscope.z];
+	// 	gy.push(temp);
+	// });
+	// gyroscope.start();
+
+	window.onload=function(){
+	    // const accel_but=document.getElementById("acc");
+	    // accel_but.addEventListener("click",click);
+	    // function click(){
+	    // 	localStorage.setItem("accel_data",acc);
+	    // 	localStorage.setItem("hi","hi");
+	    // 	window.location.href="acc"+"?para1="+acc;
+	    // }
+	}	
+  </script> 
+</head> 
+
+<body> 
+	<div id="test">Loading...</div>
+	Accelerometer with gravity: <br />
+	<span id = "accelx"> </span> <br />
+	<span id = "accely"> </span> <br />
+	<span id = "accelz"> </span> <br />
+	Gyroscope: <br />
+	<span id="gyrox"></span> <br />
+	<span id="gyroy"></span> <br />
+	<span id="gyroz"></span> <br />
+	<br />
+	<button id="acc" onclick="create()">Create file</button>
+	<!-- <button id="gy">Gyroscope</button> -->
+	<!-- Console : <span id="console"></span><br /> -->
+</body> 
+</html>
